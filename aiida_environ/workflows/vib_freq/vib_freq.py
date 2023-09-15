@@ -32,7 +32,7 @@ class EnvVibfreqWorkchain(WorkChain):
         )
         spec.output('eigen', valid_type=orm.List)
         spec.output('force_constant', valid_type=orm.List)
-        spec.output('freq', valid_type=orm.List)
+        spec.output('freq', valid_type=orm.List,help='Vibrational frequencies (cm-1).')
         
         
         spec.outline(
@@ -46,7 +46,6 @@ class EnvVibfreqWorkchain(WorkChain):
         spec.exit_code(401, 'ERROR_ENVIRON',
                        message='The environ  process failed')
 
-        spec.output('vib_freq', valid_type=orm.List, required=False, help='Vibrational frequencies (cm-1).')
     
     def setup(self):
         
