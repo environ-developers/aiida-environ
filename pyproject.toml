@@ -55,6 +55,7 @@ tests = [
 "environ.pw.relax" = "aiida_environ.workflows.pw.relax:EnvPwRelaxWorkChain"
 "environ.pw.solvation" = "aiida_environ.workflows.pw.solvation:PwSolvationWorkChain"
 "environ.pw.force_test" = "aiida_environ.workflows.pw.force_test:EnvPwForceTestWorkChain"
+"environ.pw.vib_freq" = "aiida_environ.workflows.vib_freq.vib_freq:EnvVibfreqWorkchain"
 
 [tool.flit.module]
 name = 'aiida_environ'
