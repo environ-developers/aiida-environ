@@ -48,13 +48,6 @@ class EnvVibfreqWorkchain(WorkChain):
 
     
     def setup(self):
-        
-        self.ctx.inputs = AttributeDict(self.exposed_inputs(EnvPwCalculation, namespace='environ'))
-
-        self.ctx.inputs.parameters = self.ctx.inputs.parameters.get_dict()
-        self.ctx.inputs.parameters.setdefault('CONTROL', {})
-        self.ctx.inputs.parameters.setdefault('ELECTRONS', {})
-        self.ctx.inputs.parameters.setdefault('SYSTEM', {})
     
         self.ctx.structure = self.inputs.structure
         
@@ -96,6 +89,7 @@ class EnvVibfreqWorkchain(WorkChain):
             inputs.parameters = self.inputs.environ.parameters.clone()
             # inputs.parameters['CONTROL']['tprnfor']=True
             inputs.parameters['ELECTRONS']['startingpot']='file'
+            inputs.parameters['ELECTRONS']['startingwfc']='file'
             inputs.parent_folder = base_out.remote_folder
             inputs.environ_parameters=self.inputs.environ.environ_parameters.clone()
             inputs.environ_parameters['ENVIRON']['environ_restart']= True
@@ -154,9 +148,9 @@ class EnvVibfreqWorkchain(WorkChain):
                 force_constant.append(force_constant_temp)
         
         c1=[]
-        for i in range(9):
+        for i in range(3*len(self.inputs.move_atoms)):
             temp_c1=[]
-            for j in range(9):
+            for j in range(3*len(self.inputs.move_atoms)):
                 temp_c1.append((force_constant[i][j]+force_constant[j][i])/2)
             c1.append(temp_c1)
         c=np.array(c1)
