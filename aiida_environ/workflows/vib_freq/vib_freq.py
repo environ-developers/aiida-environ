@@ -127,7 +127,9 @@ class EnvVibfreqWorkchain(WorkChain):
         bohr2ang = 0.529177249
         ryd2ev = 13.6057039763
         force_constant=[]
-        for i_atom in range(len(self.inputs.move_atoms)):
+        count_i_atom = -1 
+        for i_atom in self.inputs.move_atoms.get_list():
+            count_i_atom = count_i_atom+1
             for i_dir in range(3):
                 force_temp = []
                 for i_move in range(5):
@@ -138,7 +140,7 @@ class EnvVibfreqWorkchain(WorkChain):
                             temp_i_move=i_move
                         else:
                             temp_i_move=i_move-1
-                        key = f'{self._RUN_PREFIX}_{i_atom}_{i_dir}_{temp_i_move}'
+                        key = f'{self._RUN_PREFIX}_{count_i_atom}_{i_dir}_{temp_i_move}'
                         force_temp.append(forces_array[key].get_array('forces')[0])
                 for key, info in aiida.common.constants.elements.items():
                     if info['symbol'] == self.inputs.structure.sites[i_atom].kind_name:
@@ -159,7 +161,7 @@ class EnvVibfreqWorkchain(WorkChain):
         self.out('force_constant',temp_c)
         eigen= np.linalg.eig(c)[0]
         freq=np.sort(eigen)[3:]
-        freq= pow(freq,0.5)*521.47090038197
+        freq= pow(np.abs(freq),0.5)*521.47090038197
         temp_eig =  orm.List(eigen.tolist()).store()
         self.out('eigen',temp_eig)
         temp_freq = orm.List(freq.tolist()).store()
@@ -197,7 +199,7 @@ class EnvVibfreqWorkchain(WorkChain):
     
     def cal_first_deriv(self, force, mass):
         force_constant=[]
-        for i_atom in range(len(self.inputs.move_atoms)):
+        for i_atom in self.inputs.move_atoms.get_list(): 
             for key, info in aiida.common.constants.elements.items():
                 if info['symbol'] == self.inputs.structure.sites[i_atom].kind_name:
                     mass_temp = info['mass'] 
