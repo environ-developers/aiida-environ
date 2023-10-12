@@ -26,6 +26,8 @@ class EnvVibfreqWorkchain(WorkChain):
                    help='atomic movement step.')
         spec.input('move_atoms', valid_type=orm.List,
                    help='atoms that can move.')
+        spec.input('move_dir', valid_type=orm.List,
+                   help='directions that atoms can move.', default=lambda: orm.List([1,1,1]))
         spec.output_namespace(
             'supercells_forces', valid_type=(orm.ArrayData, orm.TrajectoryData), required=True,
             help='The forces acting on the atoms of each supercell.'
@@ -72,7 +74,7 @@ class EnvVibfreqWorkchain(WorkChain):
             return self.exit_codes.ERROR_FAILED_BASE_SCF
     
     def run_vib(self):
-        structures = self.generate_from_structure(self.inputs.structure, self.inputs.step, self.inputs.move_atoms.get_list())
+        structures = self.generate_from_structure(self.inputs.structure, self.inputs.step, self.inputs.move_atoms.get_list(), self.inputs.move_dir.get_list())
         count = 0
         calc=[]
         base_key = f'{self._RUN_PREFIX}_0'
@@ -82,8 +84,9 @@ class EnvVibfreqWorkchain(WorkChain):
             
             inputs = AttributeDict(self.exposed_inputs(EnvPwCalculation, namespace='environ'))
             inputs.structure = i_structure
-            
-            key = f'{self._RUN_PREFIX}_{int((count)/12)}_{int((count)%12/4)}_{(count)%4}'
+            key_i, key_j, key_k = self.get_number(count, self.inputs.move_atoms.get_list(), self.inputs.move_dir.get_list())
+            # key = f'{self._RUN_PREFIX}_{int((count)/12)}_{int((count)%12/4)}_{(count)%4}'
+            key = f'{self._RUN_PREFIX}_{key_i}_{key_j}_{key_k}'
             inputs.metadata.label = key
             inputs.metadata.call_link_label = key
             inputs.parameters = self.inputs.environ.parameters.clone()
@@ -128,9 +131,12 @@ class EnvVibfreqWorkchain(WorkChain):
         ryd2ev = 13.6057039763
         force_constant=[]
         count_i_atom = -1 
+        direction_label=['x','y','z']
         for i_atom in self.inputs.move_atoms.get_list():
             count_i_atom = count_i_atom+1
             for i_dir in range(3):
+                if (self.inputs.move_dir.get_list()[i_dir]==0):
+                    continue
                 force_temp = []
                 for i_move in range(5):
                     if (i_move==2):
@@ -140,7 +146,7 @@ class EnvVibfreqWorkchain(WorkChain):
                             temp_i_move=i_move
                         else:
                             temp_i_move=i_move-1
-                        key = f'{self._RUN_PREFIX}_{count_i_atom}_{i_dir}_{temp_i_move}'
+                        key = f'{self._RUN_PREFIX}_{self.inputs.move_atoms[count_i_atom]}_{direction_label[i_dir]}_{temp_i_move}'
                         force_temp.append(forces_array[key].get_array('forces')[0])
                 for key, info in aiida.common.constants.elements.items():
                     if info['symbol'] == self.inputs.structure.sites[i_atom].kind_name:
@@ -150,9 +156,12 @@ class EnvVibfreqWorkchain(WorkChain):
                 force_constant.append(force_constant_temp)
         
         c1=[]
-        for i in range(3*len(self.inputs.move_atoms)):
+        sum_dir=0
+        for i in range(3):
+            sum_dir=sum_dir+self.inputs.move_dir.get_list()[i]
+        for i in range(sum_dir*len(self.inputs.move_atoms)):
             temp_c1=[]
-            for j in range(3*len(self.inputs.move_atoms)):
+            for j in range(sum_dir*len(self.inputs.move_atoms)):
                 temp_c1.append((force_constant[i][j]+force_constant[j][i])/2)
             c1.append(temp_c1)
         c=np.array(c1)
@@ -160,7 +169,7 @@ class EnvVibfreqWorkchain(WorkChain):
         temp_c = orm.List(c1).store()
         self.out('force_constant',temp_c)
         eigen= np.linalg.eig(c)[0]
-        freq=np.sort(eigen)[3:]
+        freq=np.sort(eigen)
         freq= pow(np.abs(freq),0.5)*521.47090038197
         temp_eig =  orm.List(eigen.tolist()).store()
         self.out('eigen',temp_eig)
@@ -168,7 +177,7 @@ class EnvVibfreqWorkchain(WorkChain):
         self.out('freq',temp_freq)
         
         
-    def generate_from_structure(self, structure, step, atoms):
+    def generate_from_structure(self, structure, step, atoms, dir):
         structure_list =[]
         for i_atom in range(len(atoms)):
             for i_dir in range(3):
@@ -190,9 +199,9 @@ class EnvVibfreqWorkchain(WorkChain):
                                structure.sites[i].position[2]+move_dir[2]*step.value*(i_move-2))
                         else:
                             p=(structure.sites[i].position[0], structure.sites[i].position[1], structure.sites[i].position[2])
-
                         s.append_atom(position=p, symbols=structure.sites[i].kind_name)
-                    structure_list.append(s)
+                    if (dir[i_dir]==1):
+                        structure_list.append(s)
         print(len(structure_list))
         return structure_list
     
@@ -205,6 +214,8 @@ class EnvVibfreqWorkchain(WorkChain):
                     mass_temp = info['mass'] 
                     break
             for i_dir in range(3):
+                if self.inputs.move_dir.get_list()[i_dir]==0:
+                    continue
                 delta_f=[]
                 delta_f.append((force[0][i_atom][i_dir]-force[2][i_atom][i_dir])/np.sqrt(mass_temp)/np.sqrt(mass))
                 delta_f.append((force[1][i_atom][i_dir]-force[2][i_atom][i_dir])/np.sqrt(mass_temp)/np.sqrt(mass))
@@ -212,6 +223,22 @@ class EnvVibfreqWorkchain(WorkChain):
                 delta_f.append((force[4][i_atom][i_dir]-force[2][i_atom][i_dir])/np.sqrt(mass_temp)/np.sqrt(mass))
                 force_constant.append(-(delta_f[0]-8*delta_f[1]+8*delta_f[2]-delta_f[3])/12.0/self.inputs.step.value)
         return force_constant
+    
+    def get_number(self, count, atom_list, dir_list):
+        sum_dir=0
+        for i in range(len(dir_list)):
+            sum_dir=sum_dir+dir_list[i]
+        set_number = int(sum_dir*4)
+        atom_number = atom_list[int(count/set_number)]
+        dir_number = int((count)%set_number/4)
+        sum_dir=0
+        for i in range(len(dir_list)):
+            if (sum_dir==dir_number):
+                break
+            sum_dir=sum_dir+1
+        direction_label=['x','y','z']
+        output_dir = direction_label[i]
+        return atom_number, output_dir, count%4
 
 
     
