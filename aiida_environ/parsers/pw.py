@@ -34,7 +34,7 @@ class EnvPwParser(PwParser):
         parser_options = settings.get(self.get_parser_settings_key(), None)
 
         # Verify that the retrieved_temporary_folder is within the arguments if temporary files were specified
-        if self.node.get_attribute("retrieve_temporary_list", None):
+        if self.node.base.attributes.get("retrieve_temporary_list", None):
             try:
                 dir_with_bands = kwargs["retrieved_temporary_folder"]
             except KeyError:
@@ -155,7 +155,7 @@ class EnvPwParser(PwParser):
         logs = get_logging_container()
         parsed_data = {}
 
-        filename_stdout = self.node.get_attribute("output_filename")
+        filename_stdout = self.node.base.attributes.get("output_filename")
 
         if filename_stdout not in self.retrieved.list_object_names():
             self.exit_code_stdout = self.exit_codes.ERROR_OUTPUT_STDOUT_MISSING
@@ -212,7 +212,7 @@ class EnvPwParser(PwParser):
         logs = get_logging_container()
         parsed_data = {}
 
-        debug_filename = self.node.get_attribute("debug_filename")
+        debug_filename = self.node.base.attributes.get("debug_filename")
 
         try:
             stdout = self.retrieved.get_object_content(debug_filename)

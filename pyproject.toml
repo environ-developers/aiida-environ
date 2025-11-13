@@ -1,29 +1,31 @@
 [build-system]
-requires = ['flit_core >=3.4,<4']
+requires = ['flit_core>=3.4,<4']
 build-backend = 'flit_core.buildapi'
 
 [project]
-name = "aiida-environ"
-version = "1.0.0"
-description = "AiiDA plugin for Environ"
-readme = "README.md"
-license = {file = "LICENSE.txt"}
-keywords = ["aiida", "workflows", "environ"]
-authors = [
-    {email = "materialab@unt.edu"},
-    {name = "MateriaLAB"}
-]
+name = 'aiida-environ'
+dynamic = ['description', 'version']
+readme = 'README.md'
+license = {file = 'LICENSE.txt'}
+keywords = ['aiida', 'workflows', 'environ']
+authors = [ {name = 'MateriaLAB', email='materialab@unt.edu'} ]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9"
+    'Development Status :: 4 - Beta',
+    'Framework :: AiiDA',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: POSIX :: Linux',
+    'Operating System :: MacOS :: MacOS X',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Topic :: Scientific/Engineering'
 ]
 dependencies = [
-    "aiida_core>=1.6",
+    "aiida_core>=2.0.0",
     "aiida_quantumespresso>=3.5",
-    "numpy"
+    "aiida-phonopy>=1.1.3",
+    "numpy",
+    "aiida_vibroscopy",
 ]
 
 [project.urls]
@@ -31,12 +33,21 @@ source = 'https://github.com/environ-developers/aiida-environ'
 
 [project.optional-dependencies]
 docs = [
-    'Sphinx'
+    'sphinx',
+    'sphinx-autoapi',
+    'sphinx-book-theme',
+    'sphinx-click',
+    'sphinx-copybutton'
+]
+pre-commit = [
+    'pre-commit',
+    'pylint',
 ]
 tests = [
-    'pytest~=6.0'
+    'pgtest',
+    'pytest',
+    'pytest-regressions',
 ]
-
 
 [project.entry-points.'aiida.calculations']
 "environ.pw" = "aiida_environ.calculations.pw:EnvPwCalculation"
@@ -44,6 +55,7 @@ tests = [
 
 [project.entry-points.'aiida.data']
 "environ.charges" = "aiida_environ.data.charge:EnvironChargeData"
+"environ.dielectric" = "aiida_environ.data.dielectric:EnvironDielectricData"
 
 [project.entry-points.'aiida.parsers']
 "environ.pw" = "aiida_environ.parsers.pw:EnvPwParser"
@@ -53,7 +65,10 @@ tests = [
 "environ.pw.relax" = "aiida_environ.workflows.pw.relax:EnvPwRelaxWorkChain"
 "environ.pw.solvation" = "aiida_environ.workflows.pw.solvation:PwSolvationWorkChain"
 "environ.pw.force_test" = "aiida_environ.workflows.pw.force_test:EnvPwForceTestWorkChain"
+"environ.pka.env_relax_phonon" = "aiida_environ.workflows.pka.env_relax_phonon:EnvRelaxPhononWorkChain"
+"environ.pka.env_phonon" = "aiida_environ.workflows.pka.env_phonon:EnvPhononWorkChain"
+"environ.pka.acid_base" = "aiida_environ.workflows.pka.acid_base:AcidBaseWorkChain"
+"environ.pka.acid_base_parameter_sweep" = "aiida_environ.workflows.pka.acid_base_parameter_sweep:AcidBaseParameterSweepWorkChain"
 
 [tool.flit.module]
 name = 'aiida_environ'
-

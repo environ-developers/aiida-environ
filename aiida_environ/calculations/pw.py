@@ -12,7 +12,7 @@ from aiida_quantumespresso.calculations.pw import PwCalculation
 from aiida_quantumespresso.utils.convert import convert_input_to_namelist_entry
 
 from aiida_environ.data.charge import EnvironChargeData
-
+from aiida_environ.data.dielectric import EnvironDielectricData
 
 class EnvPwCalculation(PwCalculation):
     """`CalcJob` implementation for the pw.x code of Quantum ESPRESSO + Environ."""
@@ -24,20 +24,40 @@ class EnvPwCalculation(PwCalculation):
         """Define the process specification."""
         # yapf: disable
         super().define(spec)
-        spec.input('metadata.options.parser_name', valid_type=str, default='environ.pw')
-        spec.input('metadata.options.debug_filename', valid_type=str, default=cls._DEFAULT_DEBUG_FILE)
-        spec.input('environ_parameters', valid_type=orm.Dict,
-            help='The input parameters that are to be used to construct the input file.')
-        spec.input('external_charges', valid_type=EnvironChargeData, required=False,
-            help='External charges')
-        # TODO add the EnvironDielectricData type too
-        # spec.input('environ_dielectric', valid_type=EnvDielectricData, required=False,
-        #    help='Dielectric regions')
+        spec.input(
+            'metadata.options.parser_name', 
+            valid_type = str, 
+            default = 'environ.pw'
+        )
+        spec.input(
+            'metadata.options.debug_filename', 
+            valid_type = str, 
+            default = cls._DEFAULT_DEBUG_FILE
+        )
+        spec.input(
+            'environ_parameters', 
+            valid_type = orm.Dict,
+            help = ('The input parameters that are to be used to construct '
+                    'the input file.')
+        )
+        spec.input(
+            'external_charges', 
+            valid_type = EnvironChargeData, 
+            required = False,
+            help = 'External charges'
+        )
+        spec.input(
+            'environ_dielectric',
+            valid_type=EnvironDielectricData,
+            required=False,
+            help='Dielectric regions'
+        )
 
     def prepare_for_submission(self, folder: Folder) -> CalcInfo:
         calcinfo = BasePwCpInputGenerator.prepare_for_submission(self, folder)
 
         # add additional files to retrieve list
+        # TODO: Add retrieval of .cube files
         calcinfo.retrieve_list.append(self.metadata.options.debug_filename)
         # TODO consider lists of length > 1
         codeinfo = calcinfo.codes_info[0]
@@ -51,10 +71,12 @@ class EnvPwCalculation(PwCalculation):
             settings = {}
         input_filecontent = self._generate_environinputdata(self.inputs.environ_parameters, self.inputs.structure, settings)
 
-        # TODO: update the parameters with the number of ext charges
         if 'external_charges' in self.inputs:
             input_filecontent += self.inputs.external_charges.environ_output()
-
+            self.inputs.environ_parameters['ENVIRON']['env_external_charges'] = len(self.inputs['external_charges'])
+        if 'environ_dielectric' in self.inputs:
+            input_filecontent += self.inputs.environ_diectric.environ_output()
+            self.inputs.environ_parameters['ENVIRON']['env_dielectric_regions'] = len(self.inputs['environ_dielectric'])
         # write the environ input file (name is fixed)
         with folder.open('environ.in', 'w') as handle:
             handle.write(input_filecontent)

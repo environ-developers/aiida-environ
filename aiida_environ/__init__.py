@@ -1,2 +1,5 @@
 # -*- coding: utf-8 -*-
-__version__ = '0.0.1'
+"""
+AiiDA plugin for Environ with Quantum Espresso.
+"""
+__version__ = '1.0.0'

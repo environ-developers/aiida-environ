@@ -8,7 +8,7 @@
    outdir = './'
 /
 &SYSTEM
-   ibrav = 1
+   ibrav = 0
    ecutrho = 480
    ecutwfc = 60
    smearing = "gauss"

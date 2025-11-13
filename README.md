@@ -4,7 +4,7 @@ This plugin builds on top of [aiida-quantumespresso](https://github.com/aiidatea
 
 ## Compatibility
 
-Currently tested with aiida-core~1.6 and aiida-quantumespresso~3.5
+Currently tested with aiida-core~2.7 and aiida-quantumespresso~4.15
 
 ## Installation
 

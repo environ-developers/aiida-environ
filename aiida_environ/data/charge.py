@@ -248,3 +248,6 @@ class EnvironChargeData(Data):
             )
 
         return inputappend
+
+    def __len__(self):
+        return len(self.environ_charges)

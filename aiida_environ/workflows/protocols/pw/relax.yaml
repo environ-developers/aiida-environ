@@ -1,0 +1,62 @@
+default_inputs:
+    clean_workdir: False
+    max_meta_convergence_iterations: 5
+    meta_convergence: True
+    volume_convergence: 0.02
+    base:
+        pw:
+            parameters:
+                CELL:
+                    press_conv_thr: 0.5
+    base_final_scf:
+        pw:
+            parameters:
+                CONTROL:
+                    calculation: scf
+    environ:
+        parameters:
+            ENVIRON:
+                env_electrostatic: True
+                env_confine: 0.0
+                environ_restart: False
+                env_static_permittivity: 78.3
+                env_pressure: -0.35
+                env_surface_tension: 50
+                verbose: 1
+                environ_thr: 100
+            BOUNDARY: 
+                alpha: 1.12
+                radius_mode: 'muff'
+                solvent_mode: 'ionic'
+                field_aware: True
+                field_factor: 0.24
+                field_asymmetry: 0.32
+                field_max: 6
+                field_min: 2
+                deriv_method: 'lowmem'
+            ELECTROSTATIC: 
+                auxiliary: 'none'
+                pbc_correction: 'parabolic'
+                pbc_dim: 0
+                solver: 'cg'
+                tol: 1.E-10
+    phonopy:
+        parameters:
+            EIGENVECTORS: True
+            DIM: [1,1,1]
+            MESH: [1,1,1]
+            GAMMA_CENTER: True
+            FC_SYMMETRY: True
+        metadata:
+            options:
+                resources: 1
+default_protocol: moderate
+protocols:
+    moderate:
+        description: 'Protocol to perform a relaxation at normal precision at moderate computational cost.'
+    precise:
+        description: 'Protocol to perform a relaxation at high precision at higher computational cost.'
+        volume_convergence: 0.01
+    fast:
+        description: 'Protocol to perform a relaxation at low precision at minimal computational cost for testing purposes.'
+        volume_convergence: 0.05

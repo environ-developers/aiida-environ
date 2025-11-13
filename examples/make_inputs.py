@@ -2,7 +2,7 @@ from aiida.plugins.factories import DataFactory
 
 
 def make_simple_structure():
-    StructureData = DataFactory("structure")
+    StructureData = DataFactory("core.structure")
     unit_cell = [[10.5835431576, 0, 0], [0, 10.5835431576, 0], [0, 0, 10.5835431576]]
 
     structure = StructureData(cell=unit_cell)
@@ -20,7 +20,7 @@ def make_simple_structure():
 
 
 def make_simple_kpoints():
-    KpointsData = DataFactory("array.kpoints")
+    KpointsData = DataFactory("core.array.kpoints")
     kpoints_mesh = KpointsData()
     kpoints_mesh.set_kpoints_mesh([1, 1, 1])
 
@@ -28,11 +28,11 @@ def make_simple_kpoints():
 
 
 def make_organic_structure():
-    import ase.io
+    from ase.io import read
 
-    a = ase.io.read("NEUTRAL_017.in")
-    StructureData = DataFactory("structure")
-    structure = StructureData(ase=a)
+    atoms = read("NEUTRAL_017.in")
+    StructureData = DataFactory("core.structure")
+    structure = StructureData(ase=atoms)
     structure.label = "240 small neutral organic molecule set, id: 17"
 
     return structure
@@ -47,17 +47,19 @@ def make_simple_parameters():
             "restart_mode": "from_scratch",
             "tprnfor": True,
         },
-        "SYSTEM": {"ecutrho": 300, "ecutwfc": 30},
+        "SYSTEM": {
+            "ecutrho": 300, 
+            "ecutwfc": 30
+        },
         "ELECTRONS": {
             "conv_thr": 5.0e-9,
-            "diagonalization": "cg",
+            "diagonalization": "rmm-davidson",
             "mixing_beta": 0.4,
             "electron_maxstep": 200,
         },
     }
-    parameters = Dict(dict=parameters)
 
-    return parameters
+    return Dict(dict=parameters)
 
 
 def make_simple_environ_parameters():
